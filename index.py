@@ -284,7 +284,7 @@ if "current_topic" not in st.session_state:
     st.session_state.current_topic = list(LESSONS.keys())[0]
 
 if "llm_provider" not in st.session_state:
-    st.session_state.llm_provider = "🤖 Local Ollama"
+    st.session_state.llm_provider = "⚡ Groq Cloud"
 
 if "groq_api_key" not in st.session_state:
     import os
@@ -461,7 +461,7 @@ THEMES = {
 
 
 def ask_ai(question, emotion, notes):
-    provider = st.session_state.get("llm_provider", "🤖 Local Ollama")
+    provider = st.session_state.get("llm_provider", "⚡ Groq Cloud")
     
     # 1. Build prompt based on student state (exactly matches main.py logic)
     emotion = emotion.lower()
@@ -773,7 +773,7 @@ with st.sidebar:
 
     st.selectbox(
         "LLM Provider:",
-        ["🤖 Local Ollama", "⚡ Groq Cloud"],
+        ["⚡ Groq Cloud", "🤖 Local Ollama"],
         key="llm_provider"
     )
 
