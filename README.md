@@ -26,6 +26,10 @@ MindFlex AI is an interactive, premium AI-powered tutor designed to adapt to a s
    - Collapsible walkthrough steps powered by custom-drawn responsive CSS chevrons (supports offline/font-restricted environments cleanly).
    - Interactive calculators: Variable substitution visualizer, algebra discriminant solver, and physics kinetic energy net work calculator.
 
+6. **📅 Adaptive Study Planner**
+   - Dynamically schedules a 3-day study plan based on student quiz scores and weak areas.
+   - Searchable completed topics catalog with coverage metrics and gamified overall score tracking.
+
 ---
 
 ## 🛠️ Local Installation & Setup
@@ -89,3 +93,12 @@ Deploying a live shareable demo link takes less than 2 minutes:
    GROQ_API_KEY = "gsk_your_actual_key_here"
    ```
 6. Click **Save** and click **Deploy!**
+
+---
+
+## 👥 Contributors
+
+* **Jay Gaikar** - [@jaygaikar-09](https://github.com/jaygaikar-09)
+* **Somya Asati** - [@somyaasati12-del](https://github.com/somyaasati12-del)
+* **Vaishnavi Asati** - [@vaishnaviasati21](https://github.com/vaishnaviasati21)
+* **Ashish Pul** - [@ashishpul](https://github.com/ashishpul)
