@@ -108,4 +108,4 @@ The application maintains state and user progress locally without requiring heav
 * **Jay Gaikar** ([@jaygaikar-09](https://github.com/jaygaikar-09)): Lead Developer, Streamlit & UI design, state management, hybrid LLM routing.
 * **Somya Asati** ([@somyaasati12-del](https://github.com/somyaasati12-del)): Frontend UI layouts, capabilities list, initial concept styling.
 * **Vaishnavi Asati** ([@vaishnaviasati21](https://github.com/vaishnaviasati21)): Study Planner feature design, schedule algorithms, and state parameters.
-* **Ashish Pul** ([@ashishpul](https://github.com/ashishpul)): Contributor, documentation structure, and repository guidelines.
+* **Ashish Pal** ([@ashishpal-018](https://github.com/ashishpal-018)): Backend developer, Ollama API service creation, and integration with the frontend dashboard.
