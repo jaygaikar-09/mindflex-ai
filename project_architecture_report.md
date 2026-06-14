@@ -73,6 +73,9 @@ The system supports a **Dual-LLM configuration** toggleable in real-time:
 * **Implementation**: Uses a hidden Streamlit HTML component (`st.components.v1.html`) containing an iframe JavaScript block. 
 * **Play/Stop Toggle**: Generates custom `🔊` (Speak) and `🔇` (Cancel) control loops. Triggers `speechSynthesis.cancel()` instantly to stop audio or overlaying tracks when switching buttons, resetting chats, or entering new questions.
 
+### D. DevOps & Environment Config
+* **Secrets Resolver**: Streamlit's environment configuration pulls masked cloud tokens seamlessly from Streamlit Secrets manager first, ensuring private API keys are never exposed in repository commits.
+
 ---
 
 ## 💾 3. Database & Data Persistence
