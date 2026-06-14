@@ -33,6 +33,37 @@ def save_user(username, password):
         return False
 
 
+STUDY_PLANNER_FILE = "study_planner.json"
+
+def load_study_planner(username):
+    import os
+    if not os.path.exists(STUDY_PLANNER_FILE):
+        return {"topics": [], "weak_areas": []}
+    try:
+        with open(STUDY_PLANNER_FILE, "r") as f:
+            data = json.load(f)
+            return data.get(username, {"topics": [], "weak_areas": []})
+    except Exception:
+        return {"topics": [], "weak_areas": []}
+
+def save_study_planner(username, user_data):
+    import os
+    try:
+        all_data = {}
+        if os.path.exists(STUDY_PLANNER_FILE):
+            try:
+                with open(STUDY_PLANNER_FILE, "r") as f:
+                    all_data = json.load(f)
+            except Exception:
+                pass
+        all_data[username] = user_data
+        with open(STUDY_PLANNER_FILE, "w") as f:
+            json.dump(all_data, f, indent=4)
+        return True
+    except Exception:
+        return False
+
+
 st.set_page_config(
     page_title="MindFlex AI",
     page_icon="🧠",
@@ -672,7 +703,12 @@ with st.sidebar:
     labs_count = len(st.session_state.get("labs_explored", set()))
     tts_count = st.session_state.get("tts_reads", 0)
     
-    progress_score = min(100, (total_interactions * 15) + (labs_count * 25) + (tts_count * 10))
+    # Integrate study planner topics coverage
+    username = st.session_state.get('username', 'student')
+    planner_data = load_study_planner(username)
+    planner_count = len(planner_data.get("topics", []))
+    
+    progress_score = min(100, (total_interactions * 10) + (labs_count * 20) + (tts_count * 10) + (planner_count * 25))
     
     st.progress(progress_score / 100.0)
     st.caption(f"Engagement Score: **{progress_score}%**")
@@ -778,173 +814,427 @@ st.markdown(
 )
 
 
-left, right = st.columns([1, 2])
+main_tab1, main_tab2 = st.tabs(["📚 Learning Dashboard", "📅 Study Planner"])
+
+with main_tab1:
+    left, right = st.columns([1, 2])
 
 
-with left:
+    with left:
 
-    st.subheader("📚 Lesson Modules")
+        st.subheader("📚 Lesson Modules")
 
-    # Dynamic topic selector dropdown
-    selected_topic = st.selectbox(
-        "Choose Subject / Topic:",
-        list(LESSONS.keys()),
-        key="current_topic",
-        on_change=lambda: st.toast("Switched to new learning module!", icon="📚")
-    )
+        # Dynamic topic selector dropdown
+        selected_topic = st.selectbox(
+            "Choose Subject / Topic:",
+            list(LESSONS.keys()),
+            key="current_topic",
+            on_change=lambda: st.toast("Switched to new learning module!", icon="📚")
+        )
 
-    lesson_data = LESSONS[selected_topic]
+        lesson_data = LESSONS[selected_topic]
 
-    st.write("Click on the steps below to expand the interactive walkthrough:")
-    # Interactive collapsible accordion steps
-    for step in lesson_data["steps"]:
-        with st.expander(step["title"]):
-            st.write(step["content"])
+        st.write("Click on the steps below to expand the interactive walkthrough:")
+        # Interactive collapsible accordion steps
+        for step in lesson_data["steps"]:
+            with st.expander(step["title"]):
+                st.write(step["content"])
 
-    # Topic-specific interactive play laboratory
-    st.divider()
-    st.subheader("🛠️ Concept Playground")
+        # Topic-specific interactive play laboratory
+        st.divider()
+        st.subheader("🛠️ Concept Playground")
 
-    if "Calculus" in selected_topic:
-        show_sub = st.checkbox("Toggle Variable Substitution Swap")
-        if show_sub:
-            if "labs_explored" in st.session_state:
-                st.session_state.labs_explored.add("calculus_swap")
-            st.latex(r"\int 2x \cos(x^2) dx \quad \xrightarrow{u = x^2, \, du = 2x\,dx} \quad \int \cos(u) du")
-            st.info("Substitution simplified the composite integral into a basic trigonometric form!")
-        else:
-            st.latex(r"\int 2x \cos(x^2) dx")
-            st.caption("Check the box above to simulate the substitution swap step!")
+        if "Calculus" in selected_topic:
+            show_sub = st.checkbox("Toggle Variable Substitution Swap")
+            if show_sub:
+                if "labs_explored" in st.session_state:
+                    st.session_state.labs_explored.add("calculus_swap")
+                st.latex(r"\int 2x \cos(x^2) dx \quad \xrightarrow{u = x^2, \, du = 2x\,dx} \quad \int \cos(u) du")
+                st.info("Substitution simplified the composite integral into a basic trigonometric form!")
+            else:
+                st.latex(r"\int 2x \cos(x^2) dx")
+                st.caption("Check the box above to simulate the substitution swap step!")
 
-    elif "Algebra" in selected_topic:
-        st.write("Enter quadratic coefficients to test the discriminant solver:")
-        c_a = st.number_input("a (quadratic coefficient)", value=1, step=1)
-        c_b = st.number_input("b (linear coefficient)", value=-5, step=1)
-        c_c = st.number_input("c (constant)", value=6, step=1)
-        if c_a != 1 or c_b != -5 or c_c != 6:
-            if "labs_explored" in st.session_state:
-                st.session_state.labs_explored.add("algebra_solver")
+        elif "Algebra" in selected_topic:
+            st.write("Enter quadratic coefficients to test the discriminant solver:")
+            c_a = st.number_input("a (quadratic coefficient)", value=1, step=1)
+            c_b = st.number_input("b (linear coefficient)", value=-5, step=1)
+            c_c = st.number_input("c (constant)", value=6, step=1)
+            if c_a != 1 or c_b != -5 or c_c != 6:
+                if "labs_explored" in st.session_state:
+                    st.session_state.labs_explored.add("algebra_solver")
 
-        disc = c_b**2 - 4*c_a*c_c
-        st.write(f"Discriminant $D = b^2 - 4ac$ = **{disc}**")
-        if disc > 0:
-            st.success("Two distinct real roots exist.")
-        elif disc == 0:
-            st.warning("Exactly one real root exists.")
-        else:
-            st.error("No real roots exist (roots are complex numbers).")
+            disc = c_b**2 - 4*c_a*c_c
+            st.write(f"Discriminant $D = b^2 - 4ac$ = **{disc}**")
+            if disc > 0:
+                st.success("Two distinct real roots exist.")
+            elif disc == 0:
+                st.warning("Exactly one real root exists.")
+            else:
+                st.error("No real roots exist (roots are complex numbers).")
 
-    elif "Physics" in selected_topic:
-        st.write("Adjust mass and velocities to calculate kinetic energy net work:")
-        p_mass = st.slider("Object Mass (kg)", 1, 10, 2)
-        p_vi = st.slider("Initial Velocity (m/s)", 0, 10, 2)
-        p_vf = st.slider("Final Velocity (m/s)", 0, 20, 6)
-        if p_mass != 2 or p_vi != 2 or p_vf != 6:
-            if "labs_explored" in st.session_state:
-                st.session_state.labs_explored.add("physics_calculator")
+        elif "Physics" in selected_topic:
+            st.write("Adjust mass and velocities to calculate kinetic energy net work:")
+            p_mass = st.slider("Object Mass (kg)", 1, 10, 2)
+            p_vi = st.slider("Initial Velocity (m/s)", 0, 10, 2)
+            p_vf = st.slider("Final Velocity (m/s)", 0, 20, 6)
+            if p_mass != 2 or p_vi != 2 or p_vf != 6:
+                if "labs_explored" in st.session_state:
+                    st.session_state.labs_explored.add("physics_calculator")
 
-        k_i = 0.5 * p_mass * (p_vi**2)
-        k_f = 0.5 * p_mass * (p_vf**2)
-        work_done = k_f - k_i
+            k_i = 0.5 * p_mass * (p_vi**2)
+            k_f = 0.5 * p_mass * (p_vf**2)
+            work_done = k_f - k_i
 
-        st.metric(label="Initial Kinetic Energy", value=f"{k_i} J")
-        st.metric(label="Final Kinetic Energy", value=f"{k_f} J")
-        st.metric(label="Net Work Done (W_net)", value=f"{work_done} Joules")
+            st.metric(label="Initial Kinetic Energy", value=f"{k_i} J")
+            st.metric(label="Final Kinetic Energy", value=f"{k_f} J")
+            st.metric(label="Net Work Done (W_net)", value=f"{work_done} Joules")
 
 
-with right:
+    with right:
 
-    st.subheader("💬 Adaptive Tutor")
+        st.subheader("💬 Adaptive Tutor")
 
-    chat_container = st.container(height=450)
+        chat_container = st.container(height=450)
 
-    with chat_container:
+        with chat_container:
 
-        for i, msg in enumerate(st.session_state.chat_history):
+            for i, msg in enumerate(st.session_state.chat_history):
 
-            # Use cute emoji avatars to avoid offline Material Icon loading issues (e.g., 'art_')
-            avatar_emoji = "🤖" if msg["role"] == "assistant" else "🧑‍🎓"
+                # Use cute emoji avatars to avoid offline Material Icon loading issues (e.g., 'art_')
+                avatar_emoji = "🤖" if msg["role"] == "assistant" else "🧑‍🎓"
 
-            with st.chat_message(msg["role"], avatar=avatar_emoji):
+                with st.chat_message(msg["role"], avatar=avatar_emoji):
 
-                st.markdown(msg["text"])
+                    st.markdown(msg["text"])
 
-                badge_col, speak_col = st.columns([9, 1])
+                    badge_col, speak_col = st.columns([9, 1])
 
-                with badge_col:
-                    if msg["badge"]:
-                        color, badge_text = msg["badge"]
-                        st.markdown(
-                            f"""
-                            <div class="badge"
-                                 style="border:1px solid {color};
-                                 color:{color};">
-                                 {badge_text}
+                    with badge_col:
+                        if msg["badge"]:
+                            color, badge_text = msg["badge"]
+                            st.markdown(
+                                f"""
+                                <div class="badge"
+                                     style="border:1px solid {color};
+                                     color:{color};">
+                                     {badge_text}
+                                </div>
+                                """,
+                                unsafe_allow_html=True
+                            )
+
+                    with speak_col:
+                        if msg["role"] == "assistant":
+                            is_playing = st.session_state.get("currently_playing") == i
+                            button_label = "🔇" if is_playing else "🔊"
+                            button_help = "Stop reading aloud" if is_playing else "Read aloud"
+                            
+                            if st.button(button_label, key=f"speak_{i}", help=button_help):
+                                if is_playing:
+                                    st.session_state.currently_playing = None
+                                    st.session_state.stop_speak = True
+                                else:
+                                    import re
+                                    st.session_state.tts_reads = st.session_state.get("tts_reads", 0) + 1
+                                    # Clean up markdown markers for speech synthesis
+                                    clean_text = re.sub(r'[*#_`\-]', ' ', msg["text"])
+                                    # Strip double spaces and LaTeX syntax
+                                    clean_text = re.sub(r'\\\(|\\\)|\\\[|\\\]', ' ', clean_text)
+                                    st.session_state.speak_text = clean_text
+                                    st.session_state.currently_playing = i
+                                    if "stop_speak" in st.session_state:
+                                        del st.session_state.stop_speak
+                                st.rerun()
+
+        st.markdown("### Quick Questions")
+
+        c1, c2, c3 = st.columns(3)
+
+        with c1:
+            if st.button(
+                "Explain Step 3",
+                use_container_width=True
+            ):
+                send_message("Explain Step 3")
+                st.rerun()
+
+        with c2:
+            if st.button(
+                "I am confused",
+                use_container_width=True
+            ):
+                send_message("I am confused about substitution")
+                st.rerun()
+
+        with c3:
+            if st.button(
+                "Practice Problem",
+                use_container_width=True
+            ):
+                send_message("Give me a practice problem")
+                st.rerun()
+
+        prompt = st.chat_input(
+            "Ask MindFlex AI..."
+        )
+
+        if prompt:
+
+            send_message(prompt)
+
+            st.rerun()
+
+with main_tab2:
+    st.subheader("📅 Study Planner")
+    st.caption("Adaptive • Intelligent • Personal")
+
+    # Load data for active user
+    username = st.session_state.get("username", "student")
+    planner_data = load_study_planner(username)
+    topics = planner_data.get("topics", [])
+    weak_areas = planner_data.get("weak_areas", [])
+
+    # ALL TOPICS definitions matching LESSONS
+    STUDY_TOPICS_MAPPING = {
+        "📐 Calculus": ["Integration by Substitution"],
+        "📊 Algebra": ["Quadratic Formula"],
+        "🍎 Physics": ["Work-Energy Theorem"]
+    }
+    ALL_PLANNER_TOPICS = [t for group in STUDY_TOPICS_MAPPING.values() for t in group]
+
+    # Calculate overall progress and average score stats
+    mastered_count = sum(1 for t in topics if t["score"] >= 70)
+    weak_count = len(weak_areas)
+    topics_logged = len(topics)
+    avg_score = round(sum(t["score"] for t in topics) / topics_logged) if topics_logged > 0 else 0
+    progress_pct = round((topics_logged / len(ALL_PLANNER_TOPICS)) * 100) if len(ALL_PLANNER_TOPICS) > 0 else 0
+
+    # Display Stat Cards using columns
+    s_col1, s_col2, s_col3, s_col4 = st.columns(4)
+    with s_col1:
+        st.markdown(f"""
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 15px; text-align: center;">
+            <div style="font-size: 24px; margin-bottom: 5px;">📚</div>
+            <div style="font-size: 18px; font-weight: 700; color: #f3f4f6;">{topics_logged}</div>
+            <div style="font-size: 11px; color: #9ca3af;">Topics Logged</div>
+            <div style="font-size: 10px; color: #6b7280;">of {len(ALL_PLANNER_TOPICS)}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with s_col2:
+        st.markdown(f"""
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 15px; text-align: center;">
+            <div style="font-size: 24px; margin-bottom: 5px;">🎯</div>
+            <div style="font-size: 18px; font-weight: 700; color: #f3f4f6;">{avg_score}%</div>
+            <div style="font-size: 11px; color: #9ca3af;">Avg Score</div>
+            <div style="font-size: 10px; color: #6b7280;">{"Great!" if avg_score >= 70 else "Keep going" if avg_score > 0 else "No quizzes yet"}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with s_col3:
+        st.markdown(f"""
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 15px; text-align: center;">
+            <div style="font-size: 24px; margin-bottom: 5px;">🏆</div>
+            <div style="font-size: 18px; font-weight: 700; color: #f3f4f6;">{mastered_count}</div>
+            <div style="font-size: 11px; color: #9ca3af;">Mastered</div>
+            <div style="font-size: 10px; color: #6b7280;">score &ge; 70%</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with s_col4:
+        st.markdown(f"""
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 15px; text-align: center;">
+            <div style="font-size: 24px; margin-bottom: 5px;">⚠️</div>
+            <div style="font-size: 18px; font-weight: 700; color: #f3f4f6;">{weak_count}</div>
+            <div style="font-size: 11px; color: #9ca3af;">Weak Areas</div>
+            <div style="font-size: 10px; color: #6b7280;">need revision</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # Sub-tabs for the Study Planner sections
+    sub_tab1, sub_tab2, sub_tab3 = st.tabs(["📅 Schedule", "📚 My Topics", "➕ Log Topic"])
+
+    with sub_tab1:
+        # Schedule tab
+        st.subheader("Your Study Schedule")
+        
+        # Display weak areas as badges if any
+        if weak_areas:
+            weak_badges = "".join([f"<span style='background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px; padding: 2px 8px; font-size: 11px; margin-right: 5px; display: inline-block;'>{w}</span>" for w in weak_areas])
+            st.markdown(f"**Needs Revision:** {weak_badges}", unsafe_allow_html=True)
+            st.markdown("<br>", unsafe_allow_html=True)
+        
+        # Plan generation algorithm
+        import datetime
+        today = datetime.date.today()
+        covered = [t["name"] for t in topics]
+        new_topics = [t for t in ALL_PLANNER_TOPICS if t not in covered]
+        
+        plan = {}
+        for i in range(3):
+            day_date = today + datetime.timedelta(days=i)
+            if i == 0:
+                label = "Today"
+            elif i == 1:
+                label = "Tomorrow"
+            else:
+                label = day_date.strftime("%A")
+            
+            sessions = []
+            # Revision for weak areas
+            for w_topic in weak_areas[:2]:
+                sessions.append({"topic": w_topic, "duration": 30, "type": "Revision", "icon": "🔁", "color": "rgba(244, 63, 94, 0.1)", "border": "rgba(244, 63, 94, 0.2)", "text_color": "#fda4af"})
+            # New Topic if available
+            if i < len(new_topics):
+                sessions.append({"topic": new_topics[i], "duration": 25, "type": "New Topic", "icon": "📘", "color": "rgba(59, 130, 246, 0.1)", "border": "rgba(59, 130, 246, 0.2)", "text_color": "#93c5fd"})
+            # Quiz on day 3
+            if i == 2:
+                sessions.append({"topic": "Mixed Quiz", "duration": 20, "type": "Quiz", "icon": "🧪", "color": "rgba(245, 158, 11, 0.1)", "border": "rgba(245, 158, 11, 0.2)", "text_color": "#fde047"})
+            
+            plan[label] = sessions
+            
+        # Select active day
+        active_day = st.radio("Choose Day:", list(plan.keys()), horizontal=True, key="planner_active_day")
+        
+        if active_day:
+            day_sessions = plan[active_day]
+            total_time = sum(s["duration"] for s in day_sessions)
+            st.caption(f"⏱ Total study time: {total_time} mins")
+            
+            if not day_sessions:
+                st.info("No study sessions scheduled for this day! Log some topics to generate revision tasks.")
+            else:
+                for session in day_sessions:
+                    st.markdown(f"""
+                    <div style="background: {session['color']}; border: 1px solid {session['border']}; border-radius: 12px; padding: 12px 18px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; align-items: center;">
+                            <span style="font-size: 24px; margin-right: 15px;">{session['icon']}</span>
+                            <div>
+                                <div style="font-weight: 600; color: {session['text_color']}; font-size: 14px;">{session['topic']}</div>
+                                <div style="font-size: 11px; color: #9ca3af; margin-top: 1px;">{session['type']}</div>
                             </div>
-                            """,
-                            unsafe_allow_html=True
-                        )
+                        </div>
+                        <div style="font-weight: 700; color: #f3f4f6; font-size: 14px;">{session['duration']} min</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+        if topics_logged == 0:
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.info("💡 Log some completed topics under **Log Topic** to dynamically populate your adaptive revision schedule!")
 
-                with speak_col:
-                    if msg["role"] == "assistant":
-                        is_playing = st.session_state.get("currently_playing") == i
-                        button_label = "🔇" if is_playing else "🔊"
-                        button_help = "Stop reading aloud" if is_playing else "Read aloud"
-                        
-                        if st.button(button_label, key=f"speak_{i}", help=button_help):
-                            if is_playing:
-                                st.session_state.currently_playing = None
-                                st.session_state.stop_speak = True
-                            else:
-                                import re
-                                st.session_state.tts_reads = st.session_state.get("tts_reads", 0) + 1
-                                # Clean up markdown markers for speech synthesis
-                                clean_text = re.sub(r'[*#_`\-]', ' ', msg["text"])
-                                # Strip double spaces and LaTeX syntax
-                                clean_text = re.sub(r'\\\(|\\\)|\\\[|\\\]', ' ', clean_text)
-                                st.session_state.speak_text = clean_text
-                                st.session_state.currently_playing = i
-                                if "stop_speak" in st.session_state:
-                                    del st.session_state.stop_speak
-                            st.rerun()
+    with sub_tab2:
+        # My Topics list
+        st.subheader("Your Logged Topics")
+        search_query = st.text_input("🔍 Search topics...", placeholder="Type topic name...", key="topics_search")
+        
+        filtered_topics = [t for t in topics if search_query.lower() in t["name"].lower()]
+        
+        if not filtered_topics:
+            st.info("No topics found matching your search. Go to **Log Topic** to add one!")
+        else:
+            for t in filtered_topics:
+                score = t["score"]
+                bar_color = "#34d399" if score >= 70 else "#fbbf24" if score >= 50 else "#f87171"
+                
+                # HTML template for topic row
+                st.markdown(f"""
+                <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.04); border-radius: 12px; padding: 12px 18px; margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                        <span style="font-weight: 600; color: #f3f4f6; font-size: 14px;">{t['name']}</span>
+                        <span style="font-weight: 700; color: {bar_color}; font-size: 14px;">{score}%</span>
+                    </div>
+                    <div style="width: 100%; border-radius: 10px; height: 6px; background: rgba(255, 255, 255, 0.05);">
+                        <div style="background: {bar_color}; height: 6px; border-radius: 10px; width: {score}%;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 10px; color: #6b7280; margin-top: 5px;">
+                        <span>Completed on: {t['date']}</span>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # Render delete button for each topic
+                del_col1, del_col2 = st.columns([9, 1])
+                with del_col2:
+                    if st.button("🗑️", key=f"del_{t['id']}", help=f"Remove {t['name']}"):
+                        topics = [x for x in topics if x["id"] != t["id"]]
+                        weak_areas = [w for w in weak_areas if w != t["name"]]
+                        planner_data["topics"] = topics
+                        planner_data["weak_areas"] = weak_areas
+                        save_study_planner(username, planner_data)
+                        st.toast(f"Removed topic: {t['name']}", icon="🗑️")
+                        st.rerun()
 
-    st.markdown("### Quick Questions")
-
-    c1, c2, c3 = st.columns(3)
-
-    with c1:
-        if st.button(
-            "Explain Step 3",
-            use_container_width=True
-        ):
-            send_message("Explain Step 3")
-            st.rerun()
-
-    with c2:
-        if st.button(
-            "I am confused",
-            use_container_width=True
-        ):
-            send_message("I am confused about substitution")
-            st.rerun()
-
-    with c3:
-        if st.button(
-            "Practice Problem",
-            use_container_width=True
-        ):
-            send_message("Give me a practice problem")
-            st.rerun()
-
-    prompt = st.chat_input(
-        "Ask MindFlex AI..."
-    )
-
-    if prompt:
-
-        send_message(prompt)
-
-        st.rerun()
+    with sub_tab3:
+        # Log Topic tab
+        st.subheader("Log a Completed Topic")
+        
+        # Select topic dropdown
+        available_choices = []
+        for category, items in STUDY_TOPICS_MAPPING.items():
+            for item in items:
+                is_logged = any(t["name"] == item for t in topics)
+                available_choices.append((item, category, is_logged))
+                
+        # Format option labels
+        option_labels = []
+        option_values = []
+        for item, category, is_logged in available_choices:
+            option_values.append(item)
+            label = f"{category} - {item}"
+            if is_logged:
+                label += " (✓ Completed)"
+            option_labels.append(label)
+            
+        selected_log_topic = st.selectbox(
+            "Select Completed Topic:",
+            options=option_values,
+            format_func=lambda x: option_labels[option_values.index(x)],
+            key="log_topic_select"
+        )
+        
+        score_val = st.number_input("Quiz Score (0-100):", min_value=0, max_value=100, value=75, key="log_topic_score")
+        
+        # Feedback indicator message
+        if score_val >= 70:
+            st.success("🏆 Excellent! Topic mastered.")
+        elif score_val >= 50:
+            st.warning("📖 Good effort! A bit more practice needed.")
+        else:
+            st.error("⚠️ Will be added to weak areas for revision.")
+            
+        if st.button("Save Topic →", use_container_width=True, key="log_topic_save_btn"):
+            if not selected_log_topic:
+                st.error("Please select a topic!")
+            else:
+                existing = next((t for t in topics if t["name"] == selected_log_topic), None)
+                today_str = datetime.date.today().strftime("%Y-%m-%d")
+                
+                if existing:
+                    existing["score"] = score_val
+                    existing["date"] = today_str
+                else:
+                    topics.append({
+                        "id": int(datetime.datetime.now().timestamp()),
+                        "name": selected_log_topic,
+                        "score": score_val,
+                        "date": today_str
+                    })
+                
+                # Update weak areas
+                if score_val < 60:
+                    if selected_log_topic not in weak_areas:
+                        weak_areas.append(selected_log_topic)
+                else:
+                    weak_areas = [w for w in weak_areas if w != selected_log_topic]
+                    
+                planner_data["topics"] = topics
+                planner_data["weak_areas"] = weak_areas
+                
+                if save_study_planner(username, planner_data):
+                    st.toast(f"Successfully logged {selected_log_topic}!", icon="✨")
+                    st.rerun()
+                else:
+                    st.error("Failed to save. Try again.")
 
 
 # --- Speech Synthesis Player ---
