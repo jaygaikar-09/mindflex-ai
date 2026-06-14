@@ -112,4 +112,4 @@ The application maintains state and user progress locally without requiring heav
 * **Somya Asati** ([@somyaasati12-del](https://github.com/somyaasati12-del)): Frontend UI layouts, capabilities list, initial concept styling.
 * **Vaishnavi Asati** ([@vaishnaviasati21](https://github.com/vaishnaviasati21)): Study Planner feature design, schedule algorithms, and state parameters.
 * **Ashish Pal** ([@ashishpal-018](https://github.com/ashishpal-018)): Backend developer, Ollama API service creation, and integration with the frontend dashboard.
-* **Aron Smith Thomas** ([@aroncodes1101](https://github.com/aroncodes1101)): DevOps & Cloud Infrastructure Engineer. Managed deployment strategies, cloud hosting setup, and environment config integration.
+* **Aron Smith Thomas** ([@aroncodes1101](https://github.com/aroncodes1101)): Managed deployment strategies, cloud hosting setup, and environment config integration.
