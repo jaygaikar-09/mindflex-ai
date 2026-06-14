@@ -2,6 +2,8 @@
 
 MindFlex AI is an interactive, premium AI-powered tutor designed to adapt to a student's emotional and cognitive state in real-time. Built for hackathons, it showcases a fully functional glassmorphic UI, dynamic learning modules, native browser text-to-speech, and a smart dual-LLM system (Local Ollama / Groq Cloud).
 
+🚀 **Live Deployed App:** [mindflex-ai.streamlit.app](https://mindflex-ai.streamlit.app/)
+
 ---
 
 ## 🌟 Key Features

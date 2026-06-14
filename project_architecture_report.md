@@ -2,6 +2,8 @@
 
 This report outlines the complete frontend, backend, database, APIs, and features utilized in **MindFlex AI - Emotion-Aware Virtual Learning Assistant**.
 
+🚀 **Live Deployed App:** [mindflex-ai.streamlit.app](https://mindflex-ai.streamlit.app/)
+
 ---
 
 ## 🏗️ System Architecture Overview
