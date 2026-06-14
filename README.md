@@ -101,4 +101,4 @@ Deploying a live shareable demo link takes less than 2 minutes:
 * **Jay Gaikar** - [@jaygaikar-09](https://github.com/jaygaikar-09)
 * **Somya Asati** - [@somyaasati12-del](https://github.com/somyaasati12-del)
 * **Vaishnavi Asati** - [@vaishnaviasati21](https://github.com/vaishnaviasati21)
-* **Ashish Pal** - [@ashishpul](https://github.com/ashishpal-018)
+* **Ashish Pal** - [@ashishpal](https://github.com/ashishpal-018)
